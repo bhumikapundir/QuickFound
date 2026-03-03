@@ -19,6 +19,9 @@ const claimSchema = new mongoose.Schema({
       providedAnswer: String
     }
   ],
+    proofImage: {
+    type: String
+  },
 
   status: {
     type: String,
