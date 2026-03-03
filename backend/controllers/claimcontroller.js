@@ -1,5 +1,7 @@
 const Claim = require("../models/claim");
 const Item = require("../models/item");
+const cloudinary = require("../config/cloudinary");
+const streamifier = require("streamifier");
 
 exports.createClaim = async (req, res) => {
   try {
@@ -30,11 +32,33 @@ exports.createClaim = async (req, res) => {
       });
     }
 
-    // 4️⃣ Create claim
+    let imageUrl = "";
+
+    // 4️⃣ Upload image to Cloudinary (if file exists)
+    if (req.file) {
+      const streamUpload = () => {
+        return new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: "quickfound_claims" },
+            (error, result) => {
+              if (result) resolve(result);
+              else reject(error);
+            }
+          );
+          streamifier.createReadStream(req.file.buffer).pipe(stream);
+        });
+      };
+
+      const result = await streamUpload();
+      imageUrl = result.secure_url;
+    }
+
+    // 5️⃣ Create claim with image
     const newClaim = await Claim.create({
       item: itemId,
       claimedBy: userId,
-      answers
+      answers,
+      proofImage: imageUrl
     });
 
     res.status(201).json(newClaim);
