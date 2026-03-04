@@ -6,17 +6,20 @@ interface ThemeContextType {
   theme: Theme
   setTheme: (t: Theme) => void
   isDark: boolean
+  mounted: boolean
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('system')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     const saved = (localStorage.getItem('qf_theme') as Theme) || 'system'
     setThemeState(saved)
     applyTheme(saved)
+    setMounted(true)
   }, [])
 
   const applyTheme = (t: Theme) => {
@@ -32,12 +35,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyTheme(t)
   }
 
-  const prefersDark = typeof window !== 'undefined'
-    ? window.matchMedia('(prefers-color-scheme: dark)').matches : false
-  const isDark = theme === 'dark' || (theme === 'system' && prefersDark)
+  // Before mounted, always return false to match server render
+  const prefersDark =
+    mounted && typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : false
+
+  const isDark = mounted && (theme === 'dark' || (theme === 'system' && prefersDark))
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, isDark }}>
+    <ThemeContext.Provider value={{ theme, setTheme, isDark, mounted }}>
       {children}
     </ThemeContext.Provider>
   )

@@ -73,7 +73,7 @@ const ADMIN_LINKS = [
    ============================================================ */
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth()
-  const { isDark, setTheme, theme } = useTheme()
+const { isDark, setTheme, theme, mounted } = useTheme()
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -194,8 +194,9 @@ export default function Navbar() {
               className="qf-btn qf-btn-ghost"
               style={{ padding: '0.5rem', borderRadius: 8 }}
             >
-              {isDark ? <SunIcon /> : <MoonIcon />}
+              {mounted ? (isDark ? <SunIcon /> : <MoonIcon />) : <MoonIcon />}
             </button>
+
 
             {isAuthenticated ? (
               <>
