@@ -24,3 +24,9 @@ app.listen(PORT, () => {
 const claimRoutes = require("./routes/claimroutes");
 
 app.use("/api/claims", claimRoutes);
+const authRoutes = require("./routes/authroutes");
+const itemRoutes = require("./routes/itemroutes");
+app.use("/api/auth", authRoutes);
+app.use("/api/items", itemRoutes);
+const itemRoutes = require("./routes/itemroutes");
+app.use("/api/items", itemRoutes);

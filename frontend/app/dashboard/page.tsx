@@ -84,6 +84,8 @@ function StatCard({ emoji, label, value, color }: {
       }}>
         {emoji}
       </div>
+      <div className="qf-container" style={{ paddingBlock: '2rem' }}>
+      </div>
       <div>
         <p style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', lineHeight: 1, margin: 0 }}>
           {value}
@@ -375,7 +377,8 @@ export default function DashboardPage() {
   const [myClaims, setMyClaims] = useState<ClaimRequest[]>([])
   const [itemsLoading, setItemsLoading]   = useState(true)
   const [claimsLoading, setClaimsLoading] = useState(true)
-
+  const [ownerClaims, setOwnerClaims] = useState<any[]>([])
+  
   /* ── Redirect if not logged in ── */
   useEffect(() => {
     if (!authLoading && !isAuthenticated) router.push('/login?redirect=/dashboard')
@@ -391,7 +394,25 @@ export default function DashboardPage() {
       .then(setMyClaims)
       .finally(() => setClaimsLoading(false))
   }, [isAuthenticated])
+  useEffect(() => {
+  if (!isAuthenticated) return
 
+  const fetchOwnerClaims = async () => {
+    try {
+      const studentId = localStorage.getItem("studentId")
+
+      const res = await fetch(
+        `http://localhost:5000/api/claims/owner/${studentId}`
+      )
+
+      const data = await res.json()
+      setOwnerClaims(data)
+        } catch (err) {
+          console.error(err)
+        }
+      }
+      fetchOwnerClaims()
+    }, [isAuthenticated])
   const handleDeleteItem = (id: string) => {
     setMyItems(prev => prev.filter(i => i._id !== id))
   }
@@ -510,7 +531,7 @@ export default function DashboardPage() {
                 <span style={{
                   background: activeTab === tab.key ? 'var(--color-brand-amber)' : 'var(--color-surface-3)',
                   color: activeTab === tab.key ? 'var(--color-brand-navy)' : 'var(--color-text-muted)',
-                  fontSize: '0.7rem', fontWeight: 700,
+                  fontSize: '0.7rem', fontWeight: 700, 
                   padding: '0.1rem 0.45rem', borderRadius: 99,
                   minWidth: 20, textAlign: 'center' as const,
                 }}>
@@ -536,6 +557,28 @@ export default function DashboardPage() {
             onUpdate={handleUpdateClaim}
           />
         )}
+        {ownerClaims.length > 0 && (
+  <div style={{ marginTop: "2rem" }}>
+    <h2>Claim Requests For Your Items</h2>
+
+    {ownerClaims.map((claim) => (
+      <div
+        key={claim.claimId}
+        style={{
+          border: "1px solid var(--color-border)",
+          padding: "0.75rem",
+          marginTop: "0.5rem",
+          borderRadius: 8
+        }}
+      >
+        <p>Item ID: {claim.itemId}</p>
+        <p>Claimed By: {claim.claimerName}</p>
+        <p>Student ID: {claim.claimerId}</p>
+        <p>Status: {claim.status}</p>
+      </div>
+    ))}
+  </div>
+)}
 
       </div>
     </div>

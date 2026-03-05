@@ -1,34 +1,11 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
 const claimSchema = new mongoose.Schema({
-  item: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Item",
-    required: true
-  },
+  itemId: { type: mongoose.Schema.Types.ObjectId, ref: "Item" },
+  claimerId: String,
+  ownerId: String,
+  status: { type: String, default: "pending" },
+  createdAt: { type: Date, default: Date.now }
+})
 
-  claimedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  },
-
-  answers: [
-    {
-      question: String,
-      providedAnswer: String
-    }
-  ],
-    proofImage: {
-    type: String
-  },
-
-  status: {
-    type: String,
-    enum: ["pending", "approved", "rejected"],
-    default: "pending"
-  }
-
-}, { timestamps: true });
-
-module.exports = mongoose.model("Claim", claimSchema);
+module.exports = mongoose.model("Claim", claimSchema)

@@ -47,7 +47,28 @@ export default function LoginPage() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
     setError('')
   }
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
+  const res = await fetch("http://localhost:5000/api/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      studentId: form.studentId,
+      password: form.password
+    })
+  })
+  const data = await res.json()
+  if (res.ok) {
+    localStorage.setItem("studentId", data.user.studentId)
+    localStorage.setItem("userName", data.user.name)
+    alert("Login successful")
 
+  } else {
+    alert(data.message)
+  }
+  }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.studentId || !form.password) {

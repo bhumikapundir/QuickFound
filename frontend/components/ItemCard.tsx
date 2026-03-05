@@ -49,7 +49,34 @@ interface ItemCardProps {
 export default function ItemCard({ item, compact = false }: ItemCardProps) {
   const isLost   = item.type === 'lost'
   const isClaimed = item.status === 'claimed' || item.status === 'resolved'
+  const handleClaim = async (e: React.MouseEvent) => {
+  e.preventDefault()
+  e.stopPropagation()
 
+  try {
+    const res = await fetch("http://localhost:5000/api/items/claim", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        itemId: item._id,
+        studentId: localStorage.getItem("studentId")
+      })
+    })
+
+    const data = await res.json()
+
+    if (data.securityQuestions) {
+      alert("Security Questions:\n" + data.securityQuestions.join("\n"))
+    } else {
+      alert(data.message)
+    }
+
+  } catch (err) {
+    console.error(err)
+  }
+}
   return (
     <Link
       href={`/items/${item._id}`}
@@ -163,7 +190,24 @@ export default function ItemCard({ item, compact = false }: ItemCardProps) {
             {truncate(item.description, 90)}
           </p>
         )}
-
+        {/* Claim Button */}
+        {!isClaimed && (
+          <button
+            onClick={handleClaim}
+            style={{
+              marginTop: 10,
+              padding: '0.5rem',
+              borderRadius: 8,
+              border: 'none',
+              background: '#8b5cf6',
+              color: 'white',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Claim Item
+          </button>
+        )}
         {/* Meta — location + date */}
         <div style={{
           display: 'flex',
