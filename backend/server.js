@@ -18,9 +18,8 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 const claimRoutes = require("./routes/claimroutes");
-
+const authRoutes = require("./routes/authroutes");
+const itemRoutes = require("./routes/itemroutes");
 app.use("/api/claims", claimRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/auth", authRoutes);
-const authRoutes = require("./routes/authroutes");
-const itemRoutes = require("./routes/itemroutes");
