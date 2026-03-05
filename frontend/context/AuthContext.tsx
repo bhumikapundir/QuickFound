@@ -51,10 +51,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const token = localStorage.getItem('qf_token')
       const user = localStorage.getItem('qf_user')
+
       if (token && user) {
         dispatch({ type: 'RESTORE_SESSION', payload: { token, user: JSON.parse(user) } })
       } else {
-        dispatch({ type: 'SET_LOADING', payload: false })
+        // fallback for earlier login storage
+        const fallbackUser = localStorage.getItem('user')
+        if (fallbackUser) {
+          const parsed = JSON.parse(fallbackUser)
+          dispatch({ type: 'RESTORE_SESSION', payload: { token: 'session', user: parsed } })
+        } else {
+          dispatch({ type: 'SET_LOADING', payload: false })
+        }
       }
     } catch {
       dispatch({ type: 'SET_LOADING', payload: false })
@@ -64,22 +72,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (payload: LoginPayload) => {
     dispatch({ type: 'SET_LOADING', payload: true })
     const res = await loginUser(payload)
+
     localStorage.setItem('qf_token', res.token)
     localStorage.setItem('qf_user', JSON.stringify(res.user))
+
+    // fallback compatibility
+    localStorage.setItem('user', JSON.stringify(res.user))
+
     dispatch({ type: 'LOGIN_SUCCESS', payload: { user: res.user, token: res.token } })
   }
 
   const register = async (payload: RegisterPayload) => {
     dispatch({ type: 'SET_LOADING', payload: true })
     const res = await registerUser(payload)
+
     localStorage.setItem('qf_token', res.token)
     localStorage.setItem('qf_user', JSON.stringify(res.user))
+
+    // fallback compatibility
+    localStorage.setItem('user', JSON.stringify(res.user))
+
     dispatch({ type: 'LOGIN_SUCCESS', payload: { user: res.user, token: res.token } })
   }
 
   const logout = () => {
     localStorage.removeItem('qf_token')
     localStorage.removeItem('qf_user')
+    localStorage.removeItem('user')
     dispatch({ type: 'LOGOUT' })
   }
 
