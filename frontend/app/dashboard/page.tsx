@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
-import { fetchMyItems, fetchMyClaims, updateClaimStatus, deleteItem } from '@/services/itemService'
+import { fetchMyClaims, updateClaimStatus, deleteItem } from '@/services/itemService'
 import { Modal } from '@/components/Modal'
 import { SkeletonCard } from '@/components/Skeleton'
 import { EmptyState } from '@/components/EmptyState'
@@ -84,8 +84,6 @@ function StatCard({ emoji, label, value, color }: {
       }}>
         {emoji}
       </div>
-      <div className="qf-container" style={{ paddingBlock: '2rem' }}>
-      </div>
       <div>
         <p style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', lineHeight: 1, margin: 0 }}>
           {value}
@@ -157,38 +155,34 @@ function MyItemsTab({ items, loading, onDelete }: {
                 style={{ position: 'absolute', top: 8, left: 8 }}>
                 {item.type === 'lost' ? '🔍 Lost' : '✅ Found'}
               </span>
-              {(item.status === 'claimed' || item.status === 'resolved') && (
-                <span className="qf-badge qf-badge-claimed"
-                  style={{ position: 'absolute', top: 8, right: 8 }}>
-                  ✓ Claimed
-                </span>
-              )}
             </div>
 
             {/* Content */}
-            <div style={{ padding: '0.875rem' }}>
-              <p style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-primary)', marginBottom: 4 }}>
+            <div style={{ padding: '1rem' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 4px', color: 'var(--color-text-primary)' }}>
                 {item.title}
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', margin: '0 0 12px' }}>
+                <MapPinIcon /> {item.location} · {formatDate(item.date)}
               </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: 10 }}>
-                <MapPinIcon /> {item.location} · {timeAgo(item.createdAt)}
-              </div>
 
               {/* Actions */}
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <Link href={`/items/${item._id}`}
                   className="qf-btn qf-btn-secondary"
-                  style={{ flex: 1, fontSize: '0.8rem', padding: '0.4rem 0.5rem', gap: 4 }}>
+                  style={{ flex: 1, textAlign: 'center' as const, padding: '0.4rem', fontSize: '0.8rem' }}>
                   <EyeIcon /> View
                 </Link>
-                <button onClick={() => setDeleteTarget(item)}
+                <button
+                  onClick={() => setDeleteTarget(item)}
                   className="qf-btn"
                   style={{
-                    padding: '0.4rem 0.625rem', borderRadius: 8,
+                    padding: '0.4rem 0.75rem', borderRadius: 8, border: 'none',
                     background: 'var(--color-lost-bg)', color: 'var(--color-lost)',
-                    border: 'none', cursor: 'pointer',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                    fontSize: '0.8rem', fontWeight: 600,
                   }}>
-                  <TrashIcon />
+                  <TrashIcon /> Delete
                 </button>
               </div>
             </div>
@@ -196,7 +190,7 @@ function MyItemsTab({ items, loading, onDelete }: {
         ))}
       </div>
 
-      {/* Delete confirm modal */}
+      {/* Delete confirmation modal */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Item" maxWidth={420}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
@@ -277,8 +271,7 @@ function MyClaimsTab({ claims, loading, onUpdate }: {
                 fontSize: '1.5rem', overflow: 'hidden', position: 'relative',
               }}>
                 {item?.imageUrl ? (
-                  <Image src={item.imageUrl} alt={item.title || ''} fill
-                    style={{ objectFit: 'cover' }} sizes="56px" />
+                  <Image src={item.imageUrl} alt={item?.title ?? ''} fill style={{ objectFit: 'cover' }} sizes="56px" />
                 ) : (
                   CATEGORY_EMOJIS[item?.category] ?? '📦'
                 )}
@@ -286,48 +279,37 @@ function MyClaimsTab({ claims, loading, onUpdate }: {
 
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' as const }}>
-                  <p style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-primary)', margin: 0 }}>
-                    {item?.title ?? 'Item'}
-                  </p>
-                  <span style={{
-                    padding: '0.15rem 0.5rem', borderRadius: 99, fontSize: '0.7rem', fontWeight: 700,
-                    background: isPending
-                      ? 'var(--color-brand-amber-dim)'
-                      : claim.status === 'approved'
-                        ? 'var(--color-found-bg)'
-                        : 'var(--color-lost-bg)',
-                    color: isPending
-                      ? 'var(--color-brand-navy)'
-                      : claim.status === 'approved'
-                        ? 'var(--color-found)'
-                        : 'var(--color-lost)',
-                    textTransform: 'capitalize' as const,
-                  }}>
-                    {claim.status}
-                  </span>
-                </div>
-
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', margin: '0 0 4px' }}>
-                  Claimed by <strong>{claimedBy?.name ?? 'A student'}</strong> · {timeAgo(claim.createdAt)}
+                <p style={{ fontWeight: 700, margin: '0 0 2px', color: 'var(--color-text-primary)', fontSize: '0.9rem' }}>
+                  {item?.title ?? 'Unknown item'}
                 </p>
-
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', margin: '0 0 6px' }}>
+                  Claimed by: {claimedBy?.name ?? claimedBy?.studentId ?? 'Unknown'} · {timeAgo(claim.createdAt)}
+                </p>
                 {claim.securityAnswer && (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: 0 }}>
-                    Answer: <em>&quot;{claim.securityAnswer}&quot;</em>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: '0 0 8px' }}>
+                    Answer: <em>{claim.securityAnswer}</em>
                   </p>
                 )}
 
-                {claim.message && (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', margin: '4px 0 0', fontStyle: 'italic' }}>
-                    &quot;{claim.message}&quot;
-                  </p>
-                )}
+                {/* Status badge */}
+                <span style={{
+                  display: 'inline-block',
+                  padding: '0.15rem 0.6rem',
+                  borderRadius: 99,
+                  fontSize: '0.72rem', fontWeight: 700,
+                  background: claim.status === 'approved' ? '#dcfce7'
+                    : claim.status === 'rejected' ? '#fee2e2' : '#fef9c3',
+                  color: claim.status === 'approved' ? '#16a34a'
+                    : claim.status === 'rejected' ? '#dc2626' : '#a16207',
+                }}>
+                  {claim.status === 'approved' ? '✓ Approved'
+                    : claim.status === 'rejected' ? '✕ Rejected' : '⏳ Pending'}
+                </span>
               </div>
 
-              {/* Actions — only for pending */}
+              {/* Approve / reject buttons */}
               {isPending && (
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <button
                     onClick={() => handleUpdate(claim._id, 'approved')}
                     disabled={updating === claim._id}
@@ -335,7 +317,8 @@ function MyClaimsTab({ claims, loading, onUpdate }: {
                     style={{
                       padding: '0.4rem 0.75rem', borderRadius: 8, border: 'none',
                       background: 'var(--color-found-bg)', color: 'var(--color-found)',
-                      cursor: 'pointer', gap: 4, fontSize: '0.8rem', fontWeight: 600,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                      fontSize: '0.8rem', fontWeight: 600,
                       opacity: updating === claim._id ? 0.6 : 1,
                     }}>
                     <CheckIcon /> Approve
@@ -347,7 +330,8 @@ function MyClaimsTab({ claims, loading, onUpdate }: {
                     style={{
                       padding: '0.4rem 0.75rem', borderRadius: 8, border: 'none',
                       background: 'var(--color-lost-bg)', color: 'var(--color-lost)',
-                      cursor: 'pointer', gap: 4, fontSize: '0.8rem', fontWeight: 600,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                      fontSize: '0.8rem', fontWeight: 600,
                       opacity: updating === claim._id ? 0.6 : 1,
                     }}>
                     <XIcon /> Reject
@@ -373,55 +357,59 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState(
     searchParams.get('tab') === 'claims' ? 'claims' : 'items'
   )
-  const [myItems, setMyItems]   = useState<Item[]>([])
-  const [myClaims, setMyClaims] = useState<ClaimRequest[]>([])
+  const [myItems, setMyItems]     = useState<Item[]>([])
+  const [myClaims, setMyClaims]   = useState<ClaimRequest[]>([])
   const [itemsLoading, setItemsLoading]   = useState(true)
   const [claimsLoading, setClaimsLoading] = useState(true)
-  const [ownerClaims, setOwnerClaims] = useState<any[]>([])
-  
+  const [ownerClaims, setOwnerClaims]     = useState<any[]>([])
+
   /* ── Redirect if not logged in ── */
   useEffect(() => {
     if (!authLoading && !isAuthenticated) router.push('/login?redirect=/dashboard')
   }, [authLoading, isAuthenticated, router])
 
-  /* ── Fetch data ── */
+  /* ── FIX 1: Fetch MY items using user._id (MongoDB _id), not studentId ── */
   useEffect(() => {
-  if (!isAuthenticated) return
+    if (!isAuthenticated || !user) return
 
-  const studentId = localStorage.getItem("studentId")
+    fetch(`http://localhost:5000/api/items`)
+      .then(res => res.json())
+      .then(data => {
+        const filtered = data.filter((item: any) => {
+          // item.postedBy can be a populated object OR a raw MongoDB _id string
+          const posterId = typeof item.postedBy === 'object'
+            ? item.postedBy?._id
+            : item.postedBy
+          return String(posterId) === String(user._id)
+        })
+        setMyItems(filtered)
+      })
+      .finally(() => setItemsLoading(false))
 
-  fetch(`http://localhost:5000/api/items`)
-    .then(res => res.json())
-    .then(data => {
-      const myItems = data.filter((item:any) => String(item.postedBy) === String(studentId))
-      setMyItems(myItems)
-    })
-    .finally(() => setItemsLoading(false))
+    fetchMyClaims()
+      .then(setMyClaims)
+      .finally(() => setClaimsLoading(false))
 
-  fetchMyClaims()
-    .then(setMyClaims)
-    .finally(() => setClaimsLoading(false))
+  }, [isAuthenticated, user])
 
-}, [isAuthenticated])
+  /* ── FIX 2: Use user.studentId from auth context (not localStorage) ── */
   useEffect(() => {
-  if (!isAuthenticated) return
+    if (!isAuthenticated || !user) return
 
-  const fetchOwnerClaims = async () => {
-    try {
-      const studentId = localStorage.getItem("studentId")
-
-      const res = await fetch(
-        `http://localhost:5000/api/claims/owner/${studentId}`
-      )
-
-      const data = await res.json()
-      setOwnerClaims(data)
-        } catch (err) {
-          console.error(err)
-        }
+    const fetchOwnerClaims = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/claims/owner/${user.studentId}`
+        )
+        const data = await res.json()
+        setOwnerClaims(Array.isArray(data) ? data : [])
+      } catch (err) {
+        console.error(err)
       }
-      fetchOwnerClaims()
-    }, [isAuthenticated])
+    }
+    fetchOwnerClaims()
+  }, [isAuthenticated, user])
+
   const handleDeleteItem = (id: string) => {
     setMyItems(prev => prev.filter(i => i._id !== id))
   }
@@ -540,7 +528,7 @@ export default function DashboardPage() {
                 <span style={{
                   background: activeTab === tab.key ? 'var(--color-brand-amber)' : 'var(--color-surface-3)',
                   color: activeTab === tab.key ? 'var(--color-brand-navy)' : 'var(--color-text-muted)',
-                  fontSize: '0.7rem', fontWeight: 700, 
+                  fontSize: '0.7rem', fontWeight: 700,
                   padding: '0.1rem 0.45rem', borderRadius: 99,
                   minWidth: 20, textAlign: 'center' as const,
                 }}>
@@ -566,28 +554,56 @@ export default function DashboardPage() {
             onUpdate={handleUpdateClaim}
           />
         )}
-        {ownerClaims.length > 0 && (
-  <div style={{ marginTop: "2rem" }}>
-    <h2>Claim Requests For Your Items</h2>
 
-    {ownerClaims.map((claim) => (
-      <div
-        key={claim.claimId}
-        style={{
-          border: "1px solid var(--color-border)",
-          padding: "0.75rem",
-          marginTop: "0.5rem",
-          borderRadius: 8
-        }}
-      >
-        <p>Item ID: {claim.itemId}</p>
-        <p>Claimed By: {claim.claimerName}</p>
-        <p>Student ID: {claim.claimerId}</p>
-        <p>Status: {claim.status}</p>
-      </div>
-    ))}
-  </div>
-)}
+        {/* ── FIX 3: ownerClaims section — properly closed inside the container ── */}
+        {ownerClaims.length > 0 && (
+          <div style={{ marginTop: '2rem' }}>
+            <h2 style={{
+              fontSize: '1.1rem', fontWeight: 700,
+              color: 'var(--color-text-primary)',
+              marginBottom: '1rem',
+            }}>
+              Claim Requests For Your Items
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {ownerClaims.map((claim) => (
+                <div
+                  key={claim.claimId}
+                  style={{
+                    border: '1px solid var(--color-border)',
+                    padding: '1rem',
+                    borderRadius: 12,
+                    background: 'var(--color-surface)',
+                    display: 'flex', flexWrap: 'wrap' as const,
+                    gap: '0.5rem', justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <div>
+                    <p style={{ margin: '0 0 4px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text-primary)' }}>
+                      Claimed by: {claim.claimerName ?? 'Unknown'}
+                    </p>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                      Student ID: {claim.claimerId} · Item: {claim.itemId}
+                    </p>
+                  </div>
+                  <span style={{
+                    padding: '0.2rem 0.75rem',
+                    borderRadius: 99,
+                    fontSize: '0.75rem', fontWeight: 700,
+                    background: claim.status === 'approved' ? '#dcfce7'
+                      : claim.status === 'rejected' ? '#fee2e2' : '#fef9c3',
+                    color: claim.status === 'approved' ? '#16a34a'
+                      : claim.status === 'rejected' ? '#dc2626' : '#a16207',
+                  }}>
+                    {claim.status === 'approved' ? '✓ Approved'
+                      : claim.status === 'rejected' ? '✕ Rejected' : '⏳ Pending'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
