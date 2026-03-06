@@ -2,14 +2,15 @@ const express = require("express");
 const router = express.Router();
 const Item = require("../models/item");
 const Claim = require("../models/claim");
-
-router.get("/", async (req, res) => {
-
-  const items = await Item.find();
-
-  res.json(items);
-
-});
+router.get("/my-items/:studentId", async (req, res) => {
+  const { studentId } = req.params
+  try {
+    const items = await Item.find({ postedBy: studentId })
+    res.json(items)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 module.exports = router;
 
 router.post("/claim", async (req, res) => {

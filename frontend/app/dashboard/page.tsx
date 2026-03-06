@@ -386,14 +386,23 @@ export default function DashboardPage() {
 
   /* ── Fetch data ── */
   useEffect(() => {
-    if (!isAuthenticated) return
-    fetchMyItems()
-      .then(setMyItems)
-      .finally(() => setItemsLoading(false))
-    fetchMyClaims()
-      .then(setMyClaims)
-      .finally(() => setClaimsLoading(false))
-  }, [isAuthenticated])
+  if (!isAuthenticated) return
+
+  const studentId = localStorage.getItem("studentId")
+
+  fetch(`http://localhost:5000/api/items`)
+    .then(res => res.json())
+    .then(data => {
+      const myItems = data.filter((item:any) => String(item.postedBy) === String(studentId))
+      setMyItems(myItems)
+    })
+    .finally(() => setItemsLoading(false))
+
+  fetchMyClaims()
+    .then(setMyClaims)
+    .finally(() => setClaimsLoading(false))
+
+}, [isAuthenticated])
   useEffect(() => {
   if (!isAuthenticated) return
 
