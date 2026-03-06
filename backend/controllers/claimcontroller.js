@@ -6,7 +6,7 @@ const streamifier = require("streamifier");
 exports.createClaim = async (req, res) => {
   try {
     const { itemId, answers } = req.body;
-    const userId = "69a67a02b27d6eec12c7a56b";
+    const userId = "69a67a02b27d6eec12c7a56b"; // hard coded need to come from jwt 
 
    let parsedAnswers = [];
 try {
