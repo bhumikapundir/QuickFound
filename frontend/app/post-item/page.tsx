@@ -124,24 +124,77 @@ export default function PostItemPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [extraKey, setExtraKey] = useState('')
   const [extraVal, setExtraVal] = useState('')
-
   const [form, setForm] = useState<ItemFormValues>({
     type: 'lost',
     title: '',
-    description: '',
     category: 'other',
     location: '',
     date: new Date().toISOString().split('T')[0],
-    securityQuestion: '',
-    securityAnswer: '',
+    securityQuestions: [
+    {
+      question: '',
+      options: ['', ''], // minimum 2 options
+      correctAnswer: -1
+    }
+  ],
     extraAttributes: {},
   })
 
-  /* ── Field updater ── */
+    /* ── Field updater ── */
   const set = (field: keyof ItemFormValues, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }))
     setError('')
   }
+
+  const addQuestion = () => {
+    const last = form.securityQuestions?.slice(-1)[0]
+
+    if (last && (!last.question.trim() || last.options.some(o => !o.trim()))) {
+      setError('Fill previous question properly first')
+      return
+    }
+
+    set('securityQuestions', [
+      ...(form.securityQuestions || []),
+      { question: '', options: ['', ''], correctAnswer: -1 }
+    ])
+  }
+
+  const updateQuestion = (index: number, value: string) => {
+    const updated = [...(form.securityQuestions ?? [])]
+    updated[index] = { ...updated[index], question: value }
+    set('securityQuestions', updated)
+  }
+
+  const addOption = (qIndex: number) => {
+    const updated = [...(form.securityQuestions ?? [])]
+    updated[qIndex] = {
+      ...updated[qIndex],
+      options: [...updated[qIndex].options, '']
+    }
+    set('securityQuestions', updated)
+  }
+
+  const updateOption = (qIndex: number, oIndex: number, value: string) => {
+    const updated = [...(form.securityQuestions ?? [])]
+    const options = [...updated[qIndex].options]
+    options[oIndex] = value
+    updated[qIndex] = { ...updated[qIndex], options }
+
+    // ❗ reset correct answer if edited
+    if (updated[qIndex].correctAnswer === -1) {
+      updated[qIndex].correctAnswer = -1
+    }
+
+    set('securityQuestions', updated)
+  }
+
+  const setCorrectAnswer = (qIndex: number, index: number) => {
+    const updated = [...(form.securityQuestions || [])]
+    updated[qIndex].correctAnswer = index
+    set('securityQuestions', updated)
+  }
+
 
   /* ── Image handler ── */
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,12 +220,22 @@ export default function PostItemPage() {
     set('extraAttributes', updated)
   }
 
+  const removeQuestion = (qIndex: number) => {
+    if ((form.securityQuestions?.length || 0) <= 1) {
+      setError('At least one question is required')
+      return
+    }
+
+    const updated = [...(form.securityQuestions || [])]
+    updated.splice(qIndex, 1)
+    set('securityQuestions', updated)
+  }
+
   /* ── Validation ── */
   const validate = () => {
     if (step === 0 && !form.type) return 'Please select Lost or Found.'
     if (step === 1) {
       if (!form.title.trim()) return 'Please enter an item title.'
-      if (!form.description.trim()) return 'Please describe the item.'
       if (!form.category) return 'Please select a category.'
     }
     if (step === 2) {
@@ -180,8 +243,25 @@ export default function PostItemPage() {
       if (!form.date) return 'Please select a date.'
     }
     if (step === 3 && form.type === 'found') {
-      if (!form.securityQuestion?.trim()) return 'Please set a security question.'
-      if (!form.securityAnswer?.trim()) return 'Please set the answer to your security question.'
+      const questions = form.securityQuestions ?? []
+
+      if (!questions.length)
+        return 'Add at least one question.'
+
+      for (const q of questions) {
+        if (!q.question.trim())
+          return 'Question cannot be empty.'
+
+        if (q.options.length < 2)
+          return 'Each question needs at least 2 options.'
+
+        if (q.options.some(opt => !opt.trim()))
+          return 'Options cannot be empty.'
+
+        if (q.correctAnswer === -1)
+          return 'Select correct answer.'
+      }
+      
     }
     return ''
   }
@@ -348,7 +428,7 @@ export default function PostItemPage() {
                       onClick={() => set('category', val as ItemCategory)}
                       style={{
                         padding: '0.625rem 0.5rem',
-                        borderRadius: 10, border: 'none',
+                        borderRadius: 10,
                         border: `1.5px solid ${form.category === val ? 'var(--color-brand-amber)' : 'var(--color-border)'}`,
                         background: form.category === val ? 'var(--color-brand-amber-dim)' : 'var(--color-surface)',
                         cursor: 'pointer',
@@ -368,18 +448,6 @@ export default function PostItemPage() {
                     </button>
                   ))}
                 </div>
-              </div>
-
-              {/* Description */}
-              <div style={fieldWrap}>
-                <label className="qf-label" htmlFor="description">Description *</label>
-                <textarea
-                  id="description" value={form.description}
-                  onChange={e => set('description', e.target.value)}
-                  placeholder="Describe the item in detail — color, brand, size, any unique markings..."
-                  className="qf-input"
-                  style={{ resize: 'vertical', minHeight: 100 }}
-                />
               </div>
 
               {/* Image upload */}
@@ -536,69 +604,131 @@ export default function PostItemPage() {
               STEP 3 — Security
           ══════════════════════════════ */}
           {step === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} className="animate-fade-in">
-              <h3 style={{ marginBottom: 0 }}>
-                {form.type === 'found' ? 'Set a security question' : 'Almost done!'}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+              <h3>
+                {form.type === 'found' ? 'Set Security Questions' : 'Almost done!'}
               </h3>
 
               {form.type === 'found' ? (
                 <>
                   <div style={{
-                    padding: '1rem', borderRadius: 10,
+                    padding: '1rem',
+                    borderRadius: 10,
                     background: 'var(--color-brand-amber-dim)',
-                    border: '1px solid rgba(245,158,11,0.25)',
-                    fontSize: '0.875rem', color: 'var(--color-text-secondary)',
-                    lineHeight: 1.65,
+                    border: '1px solid rgba(245,158,11,0.25)'
                   }}>
-                    🔒 Set a question only the real owner would know the answer to.
-                    This prevents fraudulent claims. <strong>Never share the answer publicly.</strong>
+                    🔒 Add questions only the real owner can answer.
                   </div>
 
-                  <div style={fieldWrap}>
-                    <label className="qf-label" htmlFor="securityQuestion">Security Question *</label>
-                    <input
-                      id="securityQuestion"
-                      value={form.securityQuestion}
-                      onChange={e => set('securityQuestion', e.target.value)}
-                      placeholder="e.g. What sticker is on the laptop lid?"
-                      className="qf-input"
-                    />
-                  </div>
+                  {(form.securityQuestions ?? []).map((q, qIndex) => (
+                    <div key={qIndex} style={{
+                      border: '1px solid var(--color-border)',
+                      padding: '1rem',
+                      borderRadius: 10
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 8
+                      }}>
+                        <label className="qf-label">Question {qIndex + 1}</label>
 
-                  <div style={fieldWrap}>
-                    <label className="qf-label" htmlFor="securityAnswer">Answer *</label>
-                    <input
-                      id="securityAnswer"
-                      value={form.securityAnswer}
-                      onChange={e => set('securityAnswer', e.target.value)}
-                      placeholder="The correct answer (kept private)"
-                      className="qf-input"
-                    />
-                    <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
-                      The answer is stored securely and never shown publicly.
-                    </p>
-                  </div>
+                        <button
+                          type="button"
+                          onClick={() => removeQuestion(qIndex)}
+                          disabled={(form.securityQuestions?.length || 0) <= 1}
+                          style={{
+                            background: 'none',
+                            color: 'black',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          ❌ Delete
+                        </button>
+                      </div>
+
+                      {/* Question */}
+                      <input
+                        value={q.question}
+                        onChange={(e) => updateQuestion(qIndex, e.target.value)}
+                        placeholder="Enter question..."
+                        className="qf-input"
+                      />
+
+                      {/* Options */}
+                      <div style={{ marginTop: '1rem' }}>
+                        {q.options.map((opt, oIndex) => (
+                          <div key={oIndex} style={{
+                            display: 'flex',
+                            gap: 10,
+                            alignItems: 'center',
+                            marginBottom: 8
+                          }}>
+                            <input
+                              value={opt}
+                              placeholder={`Option ${oIndex + 1}`}
+                              onChange={(e) =>
+                                updateOption(qIndex, oIndex, e.target.value)
+                              }
+                              className="qf-input"
+                            />
+
+                            <input
+                              type="radio"
+                              name={`correct-${qIndex}`}
+                              disabled={!opt.trim()}
+                              checked={q.correctAnswer === oIndex}
+                              onChange={() => setCorrectAnswer(qIndex, oIndex)}
+                            />
+
+                            <span style={{
+                              fontSize: '0.75rem',
+                              color: q.correctAnswer === oIndex  ? 'green' : 'var(--color-text-muted)'
+                            }}>
+                              {q.correctAnswer === oIndex  ? 'Correct' : 'Select'}
+                            </span>
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={() => addOption(qIndex)}
+                          className="qf-btn qf-btn-secondary"
+                          style={{ marginTop: 6 }}
+                        >
+                          + Add Option
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={addQuestion}
+                    className="qf-btn qf-btn-primary"
+                  >
+                    + Add Question
+                  </button>
+
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                    Answers are stored securely and never shown publicly.
+                  </p>
                 </>
               ) : (
                 <div style={{
-                  padding: '1.5rem', borderRadius: 12,
+                  padding: '1.5rem',
+                  borderRadius: 12,
                   background: 'var(--color-found-bg)',
-                  border: '1px solid rgba(34,197,94,0.2)',
-                  textAlign: 'center' as const,
+                  textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🔍</div>
-                  <p style={{ fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 6 }}>
-                    No security question needed
-                  </p>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                    Since you&apos;re posting a lost item, the finder will contact you directly.
-                    Just review your details and submit!
-                  </p>
+                  No security needed for lost items.
                 </div>
               )}
             </div>
           )}
-
           {/* ══════════════════════════════
               STEP 4 — Review & Submit
           ══════════════════════════════ */}
@@ -629,11 +759,6 @@ export default function PostItemPage() {
                   {/* Title */}
                   <h3 style={{ margin: 0 }}>{form.title || '—'}</h3>
 
-                  {/* Description */}
-                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: 0 }}>
-                    {form.description || '—'}
-                  </p>
-
                   {/* Meta */}
                   <div style={{
                     display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
@@ -644,7 +769,12 @@ export default function PostItemPage() {
                       { label: 'Category', value: `${CATEGORY_EMOJIS[form.category]} ${CATEGORY_LABELS[form.category]}` },
                       { label: 'Location', value: form.location || '—' },
                       { label: 'Date', value: form.date || '—' },
-                      { label: 'Security Q', value: form.type === 'found' ? (form.securityQuestion ? '✓ Set' : '—') : 'N/A' },
+                      {
+                        label: 'Security Q',
+                        value: form.type === 'found'
+                          ? (form.securityQuestions?.length ? `${form.securityQuestions.length} Questions` : '—')
+                          : 'N/A'
+                      }
                     ].map(({ label, value }) => (
                       <div key={label}>
                         <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: 'var(--color-text-muted)', margin: '0 0 2px' }}>

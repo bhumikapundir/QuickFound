@@ -57,7 +57,8 @@ export default function ItemCard({ item, compact = false }: ItemCardProps) {
     const res = await fetch("http://localhost:5000/api/items/claim", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("qf_token")}`
       },
       body: JSON.stringify({
         itemId: item._id,
@@ -68,7 +69,14 @@ export default function ItemCard({ item, compact = false }: ItemCardProps) {
     const data = await res.json()
 
     if (data.securityQuestions) {
-      alert("Security Questions:\n" + data.securityQuestions.join("\n"))
+      console.log("MCQs:", data.securityQuestions)
+      alert(
+        data.securityQuestions
+          .map((q: any, i: number) =>
+            `${i + 1}. ${q.question}\nOptions:\n${q.options.map((o: string, j: number) => `   ${j + 1}. ${o}`).join("\n")}`
+          )
+          .join("\n\n")
+      )
     } else {
       alert(data.message)
     }
@@ -179,17 +187,6 @@ export default function ItemCard({ item, compact = false }: ItemCardProps) {
           {truncate(item.title, 55)}
         </h3>
 
-        {/* Description */}
-        {!compact && (
-          <p style={{
-            fontSize: '0.85rem',
-            color: 'var(--color-text-muted)',
-            lineHeight: 1.5,
-            flex: 1,
-          }}>
-            {truncate(item.description, 90)}
-          </p>
-        )}
         {/* Claim Button */}
         {!isClaimed && (
           <button

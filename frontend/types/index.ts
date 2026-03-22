@@ -47,13 +47,17 @@ export interface Item {
   type: ItemType
   status: ItemStatus
   title: string
-  description: string
+  description?: string
   category: ItemCategory
   location: string
   date: string
   imageUrl?: string
   postedBy: User | string
-  securityQuestion?: string
+  securityQuestions: {
+    question: string
+    options: string[]
+    correctAnswer: number
+  }[]
   extraAttributes?: Record<string, string>
   claimRequests?: ClaimRequest[]
   createdAt: string
@@ -63,13 +67,16 @@ export interface Item {
 export interface ItemFormValues {
   type: ItemType
   title: string
-  description: string
+  description?: string
   category: ItemCategory
   location: string
   date: string
   image?: File
-  securityQuestion?: string
-  securityAnswer?: string
+   securityQuestions?: {
+    question: string
+    options: string[]
+    correctAnswer: number
+  }[]
   extraAttributes?: Record<string, string>
 }
 

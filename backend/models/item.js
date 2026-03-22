@@ -20,12 +20,11 @@ const itemSchema = new mongoose.Schema({
     required: true
   },
 
-  // Plain string — frontend sends description as a simple text field
   description: {
     type: String,
-    required: true
+    required: false
   },
-
+  
   category: {
     type: String,
     enum: ["electronics", "clothing", "accessories", "documents", "keys", "bags", "stationery", "sports", "other"],
@@ -52,15 +51,28 @@ const itemSchema = new mongoose.Schema({
     required: true
   },
 
-  securityQuestion: {
-    type: String,
-    default: ""
-  },
-
-  securityAnswer: {
-    type: String,
-    default: ""
-  },
+  securityQuestions: [
+  {
+    question: {
+      type: String,
+      required: true
+    },
+    options: {
+      type: [String],
+      validate: {
+        validator: function (arr) {
+          return arr.length >= 2
+        },
+        message: "At least 2 options required"
+      }
+    },
+    correctAnswer: {
+      type: Number,
+      required: true,
+      min: 0
+    }
+  }
+],
 
   // Flexible key-value pairs e.g. { color: "red", brand: "Nike" }
   extraAttributes: {
@@ -70,5 +82,15 @@ const itemSchema = new mongoose.Schema({
   }
 
 }, { timestamps: true });
+
+itemSchema.pre("save", function (next) {
+  if (!this.securityQuestions) return next();
+  for (const q of this.securityQuestions) {
+    if (q.correctAnswer >= q.options.length) {
+      return next(new Error("Correct answer index out of range"));
+    }
+  }
+  next();
+});
 
 module.exports = mongoose.model("Item", itemSchema);
