@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useTheme } from '@/context/ThemeContext'
+import api from "@/services/api";
 
 /* ============================================================
    ICONS (inline SVGs — no extra dependency)
@@ -78,6 +79,8 @@ const { isDark, setTheme, theme, mounted } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false)
 
   // Shadow on scroll
   useEffect(() => {
@@ -85,6 +88,12 @@ const { isDark, setTheme, theme, mounted } = useTheme()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => {
+    api.get("/notifications")
+      .then(res => setNotifications(res.data))
+      .catch(err => console.error("Notification fetch error:", err));
+  }, []);
 
   // Close mobile menu on route change
   useEffect(() => { setMenuOpen(false) }, [pathname])
@@ -197,6 +206,111 @@ const { isDark, setTheme, theme, mounted } = useTheme()
               {mounted ? (isDark ? <SunIcon /> : <MoonIcon />) : <MoonIcon />}
             </button>
 
+            {/* 🔔 NOTIFICATION BELL — ADD HERE */}
+            <div style={{ position: "relative", marginRight: 8 }}>
+              {/* 🔔 Bell button */}
+              <button
+                onClick={() => setNotifOpen(prev => !prev)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1.2rem",
+                  position: "relative"
+                }}
+              >
+                🔔
+
+                {notifications.filter(n => !n.isRead).length > 0 && (
+                  <span style={{
+                    position: "absolute",
+                    top: -5,
+                    right: -5,
+                    background: "red",
+                    color: "white",
+                    borderRadius: "50%",
+                    fontSize: 10,
+                    padding: "2px 6px"
+                  }}>
+                    {notifications.filter(n => !n.isRead).length}
+                  </span>
+                )}
+              </button>
+
+              {/* 🔽 DROPDOWN */}
+              {notifOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                    onClick={() => setNotifOpen(false)}
+                  />
+
+                  <div style={{
+                    position: "absolute",
+                    right: 0,
+                    top: "calc(100% + 8px)",
+                    width: 280,
+                    maxHeight: 350,
+                    overflowY: "auto",
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 12,
+                    boxShadow: "var(--shadow-card-hover)",
+                    zIndex: 50,
+                    padding: "0.5rem"
+                  }}>
+                    
+                    {notifications.length === 0 ? (
+                      <p style={{ padding: 10, fontSize: "0.85rem" }}>
+                        No notifications
+                      </p>
+                    ) : (
+                      notifications.map(n => (
+                        <div
+                          key={n._id}
+                          onClick={async () => {
+                            try {
+                              await api.patch(`/notifications/${n._id}/read`)
+                              setNotifications(prev =>
+                                prev.map(x =>
+                                  x._id === n._id ? { ...x, isRead: true } : x
+                                )
+                              )
+                            } catch (err) {
+                              console.error("Mark read error", err)
+                            }
+                          }}
+                          style={{
+                            padding: "0.6rem",
+                            borderRadius: 8,
+                            marginBottom: 6,
+                            background: n.isRead
+                              ? "transparent"
+                              : "var(--color-surface-2)",
+                            cursor: "pointer",
+                            border: "1px solid var(--color-border)"
+                          }}
+                        >
+                          <p style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                            {n.data?.claimerName} claimed your item
+                          </p>
+
+                          <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+                            ID: {n.data?.claimerId}
+                          </p>
+
+                          <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+                            Contact: {n.data?.contact}
+                          </p>
+                        </div>
+                      ))
+                    )}
+
+                  </div>
+                </>
+              )}
+            </div>
 
             {isAuthenticated ? (
               <>
@@ -352,6 +466,7 @@ const { isDark, setTheme, theme, mounted } = useTheme()
             >
               {menuOpen ? <CloseIcon /> : <MenuIcon />}
             </button>
+            
           </div>
         </div>
       </header>

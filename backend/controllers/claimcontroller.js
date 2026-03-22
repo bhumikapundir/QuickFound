@@ -2,6 +2,9 @@ const Claim = require("../models/claim");
 const Item = require("../models/item");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
+const Notification = require("../models/notification");
+const User = require("../models/user");
+
 
 exports.createClaim = async (req, res) => {
   try {
@@ -72,14 +75,29 @@ exports.createClaim = async (req, res) => {
     });
 
     if (isVerified) {
-      const updated = await Item.findOneAndUpdate(
-        { _id: itemId, status: "active" },
-        { status: "claimed" }
-      );
-
-      if (!updated) {
-        return res.status(400).json({ message: "Item already claimed" });
+      // get claimer details
+      const claimer = await User.findById(userId);
+      if (!claimer) {
+        return res.status(404).json({ message: "User not found" });
       }
+
+      // update item status
+      item.status = "claimed";
+      await item.save();
+
+      // 🔔 create notification
+      await Notification.create({
+        user: item.postedBy,
+        message: `${claimer.name} successfully claimed your item "${item.title}"`,
+        type: "claim_success",
+        isRead: false,
+        data: {
+          claimerName: claimer.name,
+          claimerId: claimer.studentId,
+          contact: claimer.email, // or phone if available
+          itemTitle: item.title
+        }
+      });
     }
 
     res.status(201).json({

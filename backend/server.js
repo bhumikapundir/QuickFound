@@ -6,6 +6,7 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
   .catch(err => console.log("❌ DB Error:", err));
