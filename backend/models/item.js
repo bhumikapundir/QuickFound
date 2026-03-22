@@ -83,14 +83,14 @@ const itemSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-itemSchema.pre("save", function (next) {
-  if (!this.securityQuestions) return next();
+itemSchema.pre("save", function () {
+  if (!this.securityQuestions) return;
+
   for (const q of this.securityQuestions) {
     if (q.correctAnswer >= q.options.length) {
-      return next(new Error("Correct answer index out of range"));
+      throw new Error("Correct answer index out of range");
     }
   }
-  next();
 });
 
 module.exports = mongoose.model("Item", itemSchema);

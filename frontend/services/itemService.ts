@@ -17,14 +17,26 @@ export const fetchItemById = async (id: string): Promise<Item> => {
 
 export const postItem = async (payload: ItemFormValues): Promise<Item> => {
   const formData = new FormData()
+
   Object.entries(payload).forEach(([key, val]) => {
-    if (key === 'image' && val instanceof File) formData.append('image', val)
-    else if (key === 'extraAttributes') formData.append(key, JSON.stringify(val))
-    else if (val !== undefined) formData.append(key, String(val))
+    if (key === 'image' && val instanceof File) {
+      formData.append('image', val)
+
+    } else if (key === 'extraAttributes') {
+      formData.append(key, JSON.stringify(val))
+
+    } else if (key === 'securityQuestions') {   // ✅ ADD THIS BLOCK
+      formData.append(key, JSON.stringify(val))
+
+    } else if (val !== undefined) {
+      formData.append(key, String(val))
+    }
   })
+
   const { data } = await api.post('/items', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
+
   return data
 }
 

@@ -73,9 +73,12 @@ router.get("/:id", async (req, res) => {
 ────────────────────────────────────────── */
 router.post("/", authMiddleware, upload.single("image"), async (req, res) => {
   try {
+    
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
     const {
       type, title, description, category,
-      location, date, securityQuestion, securityAnswer, extraAttributes
+      location, date, extraAttributes
     } = req.body;
 
     // Upload image to Cloudinary if provided
@@ -104,6 +107,17 @@ router.post("/", authMiddleware, upload.single("image"), async (req, res) => {
       }
     }
 
+    let parsedQuestions = [];
+    if (req.body.securityQuestions) {
+      try {
+        parsedQuestions = typeof req.body.securityQuestions === "string"
+          ? JSON.parse(req.body.securityQuestions)
+          : req.body.securityQuestions;
+      } catch (e) {
+        parsedQuestions = [];
+      }
+    }
+
     const item = await Item.create({
       type,
       title,
@@ -112,8 +126,7 @@ router.post("/", authMiddleware, upload.single("image"), async (req, res) => {
       location,
       date,
       imageUrl,
-      securityQuestion: securityQuestion || "",
-      securityAnswer:   securityAnswer   || "",
+      securityQuestions: parsedQuestions, 
       extraAttributes:  parsedExtra,
       postedBy: req.user.id,  // from JWT — correct MongoDB _id
       status: "active"
@@ -121,6 +134,7 @@ router.post("/", authMiddleware, upload.single("image"), async (req, res) => {
 
     res.status(201).json(item);
   } catch (err) {
+    console.error("ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
