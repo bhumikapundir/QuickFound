@@ -72,17 +72,24 @@ function ClaimModal({
   item: Item
   onSuccess: () => void
 }) {
-  const [answer, setAnswer] = useState('')
+  const [answers, setAnswers] = useState<number[]>([])
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleClaim = async () => {
-    if (!answer.trim()) { setError('Please provide an answer.'); return }
+    if (!item.securityQuestions || answers.length !== item.securityQuestions.length) {
+      setError('Please answer all questions.')
+      return
+    }
     setLoading(true)
     setError('')
     try {
-      await claimItem({ itemId: item._id, securityAnswer: answer, message })
+      await claimItem({
+      itemId: item._id,
+      answers,
+      message
+    })
       onSuccess()
       onClose()
     } catch (err: any) {
@@ -111,37 +118,53 @@ function ClaimModal({
         </div>
 
         {/* Security question */}
-        {item.securityQuestion && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {item.securityQuestions?.map((q, qIndex) => (
+          <div key={qIndex} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            
             <label style={{
-              fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' as const,
-              letterSpacing: '0.06em', color: 'var(--color-text-muted)',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              color: 'var(--color-text-muted)'
             }}>
-              Security Question
+              Question {qIndex + 1}
             </label>
-            <div style={{
-              padding: '0.875rem 1rem', borderRadius: 10,
-              background: 'var(--color-surface-2)',
-              border: '1px solid var(--color-border)',
-              fontSize: '0.9rem', fontWeight: 600,
-              color: 'var(--color-text-primary)',
-            }}>
-              {item.securityQuestion}
-            </div>
-          </div>
-        )}
 
-        {/* Answer */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label className="qf-label" htmlFor="answer">Your Answer</label>
-          <input
-            id="answer"
-            value={answer}
-            onChange={e => { setAnswer(e.target.value); setError('') }}
-            placeholder="Enter your answer..."
-            className="qf-input"
-          />
-        </div>
+            <div style={{
+              padding: '0.75rem',
+              borderRadius: 8,
+              background: 'var(--color-surface-2)',
+              border: '1px solid var(--color-border)'
+            }}>
+              {q.question}
+            </div>
+
+            {q.options.map((opt, oIndex) => (
+              <label key={oIndex} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                cursor: 'pointer'
+              }}>
+                <input
+                  type="radio"
+                  name={`q-${qIndex}`}
+                  checked={answers[qIndex] === oIndex}
+                  onChange={() => {
+                    const updated = [...answers]
+                    updated[qIndex] = oIndex
+                    // fill missing indexes if needed
+                    for (let i = 0; i < item.securityQuestions.length; i++) {
+                      if (updated[i] === undefined) updated[i] = -1
+                    }
+                    setAnswers(updated)
+                  }}
+                />
+                {opt}
+              </label>
+            ))}
+          </div>
+        ))}
 
         {/* Optional message */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -170,9 +193,27 @@ function ClaimModal({
           </button>
           <button
             onClick={handleClaim}
-            disabled={loading}
+            disabled={
+              loading ||
+              answers.length !== item.securityQuestions?.length ||
+              answers.includes(undefined as any) ||
+              answers.includes(-1)
+            }
             className="qf-btn qf-btn-primary"
-            style={{ flex: 2, opacity: loading ? 0.7 : 1 }}
+            style={{ flex: 2, opacity:
+                loading ||
+                answers.length !== item.securityQuestions?.length ||
+                answers.includes(undefined as any) ||
+                answers.includes(-1)
+                  ? 0.6
+                  : 1,
+              cursor:
+                loading ||
+                answers.length !== item.securityQuestions?.length ||
+                answers.includes(undefined as any) ||
+                answers.includes(-1)
+                  ? 'not-allowed'
+                  : 'pointer' }}
           >
             {loading ? 'Submitting...' : 'Submit Claim'}
           </button>
@@ -424,7 +465,7 @@ export default function ItemDetailPage() {
               </div>
 
               {/* Security question hint */}
-              {item.type === 'found' && item.securityQuestion && !isClaimed && (
+              {item.type === 'found' && item.securityQuestions?.length && !isClaimed && (
                 <div style={{
                   padding: '0.875rem 1rem', borderRadius: 10,
                   background: 'var(--color-brand-amber-dim)',

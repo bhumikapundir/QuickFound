@@ -161,34 +161,55 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
 /* ──────────────────────────────────────────
    POST /api/items/claim  (legacy route)
+    Claim item using MCQ answers
 ────────────────────────────────────────── */
-router.post("/claim", async (req, res) => {
-  const { itemId, studentId } = req.body;
-
+router.post("/:id/claim", authMiddleware, async (req, res) => {
   try {
-    const item = await Item.findById(itemId);
-    if (!item) return res.status(404).json({ message: "Item not found" });
+    const { answers } = req.body
+    const itemId = req.params.id
+    const userId = req.user.id
 
-    if (String(item.postedBy) === String(studentId)) {
-      return res.status(400).json({ message: "You cannot claim your own item" });
+    const item = await Item.findById(itemId)
+    if (!item) return res.status(404).json({ message: "Item not found" })
+
+    if (item.status !== "active") {
+      return res.status(400).json({ message: "Item already claimed" })
     }
 
-    const newClaim = new Claim({
-      itemId: item._id,
-      claimerId: studentId,
-      ownerId: item.postedBy,
-      status: "pending"
-    });
+    const questions = item.securityQuestions
 
-    await newClaim.save();
+    if (!Array.isArray(answers) || answers.length !== questions.length) {
+      return res.status(400).json({ message: "Invalid answers format" })
+    }
+
+    let correctCount = 0
+    questions.forEach((q, i) => {
+      if (answers[i] === q.correctAnswer) correctCount++
+    })
+
+    const isVerified = correctCount >= Math.ceil(questions.length * 0.7)
+
+    await Claim.create({
+      item: itemId,
+      claimedBy: userId,
+      answers,
+      status: isVerified ? "approved" : "rejected"
+    })
+
+    if (isVerified) {
+      item.status = "claimed"
+      await item.save()
+    }
 
     res.json({
-      message: "Claim allowed",
-      securityQuestions: item.securityQuestion ? [item.securityQuestion] : []
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+      success: true,
+      verified: isVerified
+    })
+
+  } catch (err) {
+    console.error("CLAIM ERROR:", err)
+    res.status(500).json({ error: err.message })
   }
-});
+})
 
 module.exports = router;

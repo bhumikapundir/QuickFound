@@ -94,7 +94,7 @@ export interface ClaimRequest {
 
 export interface ClaimPayload {
   itemId: string
-  securityAnswer: string
+  answers: number[]
   message?: string
 }
 
