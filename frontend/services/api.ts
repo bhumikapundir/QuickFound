@@ -10,7 +10,13 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('qf_token')
+    const user = localStorage.getItem('qf_user')
     if (token) config.headers.Authorization = `Bearer ${token}`
+    if (user) {
+      try {
+        config.headers['x-user-id'] = JSON.parse(user)._id
+      } catch {}
+    }
   }
   return config
 })
