@@ -145,8 +145,8 @@ export default function AdminPage() {
   /* ── Auth guard — admin only ── */
   useEffect(() => {
     if (authLoading) return
-    if (!isAuthenticated) { router.push('/login'); return }
-    if (user?.role !== 'admin') { router.push('/dashboard'); return }
+    if (!isAuthenticated) { router.replace('/login'); return }
+    if (user?.role !== 'admin') { router.replace('/dashboard'); return }
   }, [authLoading, isAuthenticated, user, router])
 
   /* ── Fetch all items ── */
