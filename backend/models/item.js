@@ -9,8 +9,13 @@ const itemSchema = new mongoose.Schema({
   location: { type: String, required: true },
   date:     { type: String },
   imageUrl: { type: String },
-  securityQuestion: { type: String },
-  securityAnswer:   { type: String },
+  securityQuestions: [
+    {
+      question: { type: String },
+      options:  [{ type: String }],
+      correctAnswer: { type: Number }
+    }
+  ],
   extraAttributes:  { type: Object, default: {} },
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 }, { timestamps: true });

@@ -5,6 +5,77 @@ const Claim = require("../models/claim");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
 const upload = require("../middleware/upload");
+const Notification = require("../models/notification");
+const User = require("../models/user");
+
+// POST claim — replace the existing "/:id/claim" handler
+router.post("/:id/claim", async (req, res) => {
+  const { answers, message } = req.body;
+  const userId = req.headers["x-user-id"];
+
+  try {
+    const item = await Item.findById(req.params.id).populate("postedBy", "name studentId");
+    if (!item) return res.status(404).json({ message: "Item not found" });
+    if (item.status !== "active") return res.status(400).json({ message: "Item already claimed" });
+
+    const questions = item.securityQuestions || [];
+
+    // If no security questions, auto-approve
+    if (questions.length === 0) {
+      item.status = "claimed";
+      await item.save();
+      return res.status(201).json({ success: true, verified: true, message: "Claim approved" });
+    }
+
+    const parsedAnswers = Array.isArray(answers) ? answers : [];
+
+    if (parsedAnswers.length !== questions.length) {
+      return res.status(400).json({ message: "Please answer all questions" });
+    }
+
+    let correctCount = 0;
+    questions.forEach((q, i) => {
+      if (parsedAnswers[i] === q.correctAnswer) correctCount++;
+    });
+
+    const isVerified = correctCount >= Math.ceil(questions.length * 0.7);
+
+    if (isVerified) {
+      item.status = "claimed";
+      await item.save();
+
+      // Get claimer details
+      const claimer = await User.findById(userId);
+
+      if (claimer) {
+        // Create notification for the item poster
+        await Notification.create({
+          user: item.postedBy._id,
+          message: `${claimer.name} successfully claimed your item "${item.title}"`,
+          type: "claim_success",
+          isRead: false,
+          data: {
+            claimerName: claimer.name,
+            claimerId: claimer.studentId,
+            contact: claimer.email || claimer.studentId,
+            itemTitle: item.title
+          }
+        });
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      verified: isVerified,
+      score: `${correctCount}/${questions.length}`,
+      message: isVerified
+        ? "Claim approved! Item marked as claimed."
+        : "Incorrect answers. Claim rejected."
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET all items
 router.get("/", async (req, res) => {
@@ -16,13 +87,12 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST create item
+// POST create item 
 router.post("/", upload.single("image"), async (req, res) => {
   try {
-    const user = req.user; // you'll need auth middleware, see note below
     const {
       type, title, description, category,
-      location, date, securityQuestion, securityAnswer, extraAttributes
+      location, date, securityQuestions, extraAttributes
     } = req.body;
 
     let imageUrl = "";
@@ -40,17 +110,16 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     const newItem = await Item.create({
       title,
-      type,           // frontend sends "type" 
+      type,
       status: "active",
       category,
       description,
       location,
       date,
       imageUrl,
-      securityQuestion,
-      securityAnswer,
+      securityQuestions: securityQuestions ? JSON.parse(securityQuestions) : [],
       extraAttributes: extraAttributes ? JSON.parse(extraAttributes) : {},
-      postedBy: req.headers["x-user-id"] // temporary until you add JWT middleware
+      postedBy: req.headers["x-user-id"]
     });
 
     res.status(201).json(newItem);
@@ -91,22 +160,49 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// POST claim
+// POST claim — replace the existing "/:id/claim" handler
 router.post("/:id/claim", async (req, res) => {
-  const { securityAnswer, message } = req.body;
+  const { answers, message } = req.body;
   const userId = req.headers["x-user-id"];
+
   try {
     const item = await Item.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Item not found" });
+    if (item.status !== "active") return res.status(400).json({ message: "Item already claimed" });
 
-    const newClaim = await Claim.create({
-      item: item._id,
-      claimedBy: userId,
-      securityAnswer,
-      message,
-      status: "pending"
+    const questions = item.securityQuestions || [];
+
+    // If no security questions, auto-approve
+    if (questions.length === 0) {
+      item.status = "claimed";
+      await item.save();
+      return res.status(201).json({ success: true, verified: true, message: "Claim approved" });
+    }
+
+    const parsedAnswers = Array.isArray(answers) ? answers : [];
+
+    if (parsedAnswers.length !== questions.length) {
+      return res.status(400).json({ message: "Please answer all questions" });
+    }
+
+    let correctCount = 0;
+    questions.forEach((q, i) => {
+      if (parsedAnswers[i] === q.correctAnswer) correctCount++;
     });
-    res.status(201).json(newClaim);
+
+    const isVerified = correctCount >= Math.ceil(questions.length * 0.7);
+
+    if (isVerified) {
+      item.status = "claimed";
+      await item.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      verified: isVerified,
+      score: `${correctCount}/${questions.length}`,
+      message: isVerified ? "Claim approved! Item marked as claimed." : "Incorrect answers. Claim rejected."
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

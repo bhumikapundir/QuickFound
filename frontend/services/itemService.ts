@@ -45,8 +45,11 @@ export const deleteItem = async (id: string): Promise<void> => {
 }
 
 export const claimItem = async (payload: ClaimPayload): Promise<ClaimRequest> => {
-  const { data } = await api.post(`/items/${payload.itemId}/claim`, payload)
-  return data
+  const { data } = await api.post(`/items/${payload.itemId}/claim`, {
+    answers: payload.answers,
+    message: payload.message
+  });
+  return data;
 }
 
 export const fetchMyItems = async (): Promise<Item[]> => {
