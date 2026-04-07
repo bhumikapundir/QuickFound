@@ -14,8 +14,8 @@ export function Textarea({ label, error, hint, id, ...props }: TextareaProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {label && <label htmlFor={inputId} className="qf-label">{label}</label>}
-      <textarea
+      {label && <label htmlFor={inputId} className="qf-label">{label}</label>}  
+      <textarea  //htmlfor links label to textarea
         id={inputId}
         className="qf-input"
         style={{

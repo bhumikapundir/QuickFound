@@ -6,17 +6,17 @@ import { SelectHTMLAttributes } from 'react'
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
   error?: string
-  options: { value: string; label: string }[]
+  options: { value: string; label: string }[]   //dropdown options
   placeholder?: string
 }
 
 export function Select({ label, error, options, placeholder, id, ...props }: SelectProps) {
-  const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
+  const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-') //generate id
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {label && <label htmlFor={inputId} className="qf-label">{label}</label>}
-      <select
+      <select  //dropdown element
         id={inputId}
         className="qf-input"
         style={{

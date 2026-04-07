@@ -1,15 +1,15 @@
-import { InputHTMLAttributes, ReactNode, forwardRef } from 'react'
+import { InputHTMLAttributes, ReactNode, forwardRef } from 'react' //reactnode is used to show anything inside the input and forwardRef is used to pass ref to the input element
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> { //defintion
   label?: string
-  error?: string
+  error?: string //error message
   hint?: string
-  leftIcon?: ReactNode
+  leftIcon?: ReactNode //like search icon 
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+export const Input = forwardRef<HTMLInputElement, InputProps>( //component that extracts custom props. forwardRef allows a parent component to get a reference (ref) to a child’s DOM element.
   ({ label, error, hint, leftIcon, style, id, ...props }, ref) => {
-    const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
+    const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')  //id hai toh use kro vrna label se generate kro
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -18,8 +18,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <div style={{ position: 'relative' }}>
-          {leftIcon && (
+        
+        <div style={{ position: 'relative' }}>    
+          {leftIcon && (  //position icon inside input ->relative
             <span style={{
               position: 'absolute', left: 12, top: '50%',
               transform: 'translateY(-50%)',
@@ -36,7 +37,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className="qf-input"
             style={{
               paddingLeft: leftIcon ? '2.5rem' : undefined,
-              borderColor: error ? 'var(--color-lost)' : undefined,
+              borderColor: error ? 'var(--color-lost)' : undefined, //red border if error
               ...style,
             }}
             {...props}
@@ -44,13 +45,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         </div>
         {error && (
           <p style={{ fontSize: '0.8rem', color: 'var(--color-lost)', marginTop: 2 }}>
-            {error}
+            {error} 
           </p>
         )}
         {hint && !error && (
           <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 2 }}>
             {hint}
-          </p>
+          </p>//grey helper text
         )}
       </div>
     )
