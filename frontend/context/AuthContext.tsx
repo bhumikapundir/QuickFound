@@ -1,7 +1,7 @@
 'use client'
 import { createContext, useContext, useEffect, useReducer, ReactNode } from 'react'
-import type { User, LoginPayload, RegisterPayload } from '@/types'
-import { loginUser, registerUser } from '@/services/authService'
+import type { User, LoginPayload } from '@/types'
+import { loginUser } from '@/services/authService'
 
 interface AuthState {
   user: User | null
@@ -37,7 +37,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 interface AuthContextType extends AuthState {
   login: (payload: LoginPayload) => Promise<void>
-  register: (payload: RegisterPayload) => Promise<void>
   logout: () => void
 }
 
@@ -46,16 +45,13 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
-  // Restore session from localStorage on mount
   useEffect(() => {
     try {
       const token = localStorage.getItem('qf_token')
       const user = localStorage.getItem('qf_user')
-
       if (token && user) {
         dispatch({ type: 'RESTORE_SESSION', payload: { token, user: JSON.parse(user) } })
       } else {
-        // fallback for earlier login storage
         const fallbackUser = localStorage.getItem('user')
         if (fallbackUser) {
           const parsed = JSON.parse(fallbackUser)
@@ -72,26 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (payload: LoginPayload) => {
     dispatch({ type: 'SET_LOADING', payload: true })
     const res = await loginUser(payload)
-
     localStorage.setItem('qf_token', res.token)
     localStorage.setItem('qf_user', JSON.stringify(res.user))
-
-    // fallback compatibility
     localStorage.setItem('user', JSON.stringify(res.user))
-
-    dispatch({ type: 'LOGIN_SUCCESS', payload: { user: res.user, token: res.token } })
-  }
-
-  const register = async (payload: RegisterPayload) => {
-    dispatch({ type: 'SET_LOADING', payload: true })
-    const res = await registerUser(payload)
-
-    localStorage.setItem('qf_token', res.token)
-    localStorage.setItem('qf_user', JSON.stringify(res.user))
-
-    // fallback compatibility
-    localStorage.setItem('user', JSON.stringify(res.user))
-
     dispatch({ type: 'LOGIN_SUCCESS', payload: { user: res.user, token: res.token } })
   }
 
@@ -103,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout }}>
+    <AuthContext.Provider value={{ ...state, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

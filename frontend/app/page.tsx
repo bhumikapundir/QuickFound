@@ -563,7 +563,6 @@ export default function HomePage() {
             {[
               { href: '/items', label: 'Browse' },
               { href: '/post-item', label: 'Post Item' },
-              { href: '/register', label: 'Sign Up' },
             ].map(({ href, label }) => (
               <Link key={href} href={href} style={{
                 fontSize: '0.825rem',

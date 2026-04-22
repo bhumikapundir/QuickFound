@@ -20,20 +20,6 @@ export interface LoginPayload {
   password: string
 }
 
-export interface RegisterPayload {
-  name: string
-  email: string
-  password: string
-  universityRollNumber: string
-  studentId: string
-}
-
-export interface AuthResponse {
-  user: User
-  token: string
-  message: string
-}
-
 /* ---------- ITEMS ---------- */
 export type ItemType = 'lost' | 'found'
 export type ItemStatus = 'active' | 'claimed' | 'resolved'

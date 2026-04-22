@@ -194,20 +194,6 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            {/* Heading */}
-            <div style={{ marginBottom: '2rem' }}>
-              <h2 style={{ marginBottom: 6 }}>Sign in</h2>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                Don&apos;t have an account?{' '}
-                <Link href="/register" style={{
-                  color: 'var(--color-brand-amber)',
-                  fontWeight: 600, textDecoration: 'none',
-                }}>
-                  Sign up free
-                </Link>
-              </p>
-            </div>
-
             {/* Error */}
             {error && (
               <div style={{
@@ -324,21 +310,6 @@ export default function LoginPage() {
                 ) : 'Sign In'}
               </button>
             </form>
-
-            {/* Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.75rem 0' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
-              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' as const }}>
-                New to QuickFound?
-              </span>
-              <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
-            </div>
-
-            <Link href="/register" className="qf-btn qf-btn-secondary"
-              style={{ width: '100%', textAlign: 'center' as const }}>
-              Create an account
-            </Link>
-
           </div>
         </div>
       </div>

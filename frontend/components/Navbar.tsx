@@ -90,10 +90,12 @@ const { isDark, setTheme, theme, mounted } = useTheme()
   }, [])
 
   useEffect(() => {
-    api.get("/notifications")
-      .then(res => setNotifications(res.data))
-      .catch(err => console.error("Notification fetch error:", err));
-  }, []);
+  if (!isAuthenticated) return  // ← ADD THIS CHECK
+
+  api.get("/notifications")
+    .then(res => setNotifications(res.data))
+    .catch(err => console.error("Notification fetch error:", err));
+}, [isAuthenticated]);  // ← ADD isAuthenticated as dependency
 
   // Close mobile menu on route change
   useEffect(() => { setMenuOpen(false) }, [pathname])
@@ -450,10 +452,6 @@ const { isDark, setTheme, theme, mounted } = useTheme()
                   style={{ fontSize: '0.9rem' }}>
                   Log In
                 </Link>
-                <Link href="/register" className="qf-btn qf-btn-primary"
-                  style={{ fontSize: '0.9rem' }}>
-                  Sign Up
-                </Link>
               </div>
             )}
 
@@ -520,7 +518,6 @@ const { isDark, setTheme, theme, mounted } = useTheme()
               </>
             ) : (
               <>
-                <Link href="/register" className="qf-btn qf-btn-primary">Sign Up</Link>
                 <Link href="/login" className="qf-btn qf-btn-secondary">Log In</Link>
               </>
             )}

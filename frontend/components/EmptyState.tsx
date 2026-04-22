@@ -1,5 +1,5 @@
-'use client'
-import { ReactNode } from 'react'
+'use client' //next js ko batata hai ki ye component runs on browser not on server
+import { ReactNode } from 'react'   //reusable UI component bana raha hai jo tab use hota hai jab koi data nahi hota
 
 interface EmptyStateProps {
   icon?: string
