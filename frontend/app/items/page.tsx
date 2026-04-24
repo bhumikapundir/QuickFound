@@ -117,7 +117,7 @@ function ItemCard({ item }: { item: any }) {
           {item.imageUrl ? (
             <Image
               src={item.imageUrl} alt={item.title} fill
-              style={{ objectFit: 'cover' }} sizes="320px"
+              style={{ objectFit: 'cover', filter: (item.status === 'claimed' || item.status === 'resolved') ? 'none' : 'blur(8px)' }} sizes="320px"
             />
           ) : (
             <div style={{

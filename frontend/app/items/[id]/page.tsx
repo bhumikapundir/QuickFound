@@ -337,7 +337,7 @@ export default function ItemDetailPage() {
                     src={item.imageUrl}
                     alt={item.title}
                     fill
-                    style={{ objectFit: 'cover' }}
+                    style={{ objectFit: 'cover', filter: isClaimed ? 'none' : 'blur(8px)' }}
                     sizes="(max-width: 768px) 100vw, 500px"
                   />
                 ) : (

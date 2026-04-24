@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Item } from '@/types'
 import { formatDate, truncate, CATEGORY_LABELS } from '@/utils/helpers'
+import { cloudinaryBlur } from '@/utils/helpers'
 
 /* ============================================================
    ICONS
@@ -107,12 +108,17 @@ export default function ItemCard({ item, compact = false }: ItemCardProps) {
       }}>
         {item.imageUrl ? (
           <Image
-            src={item.imageUrl}
-            alt={item.title}
-            fill
-            style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
-            sizes="(max-width: 768px) 100vw, 320px"
-          />
+  src={item.imageUrl}
+  alt={item.title}
+  fill
+  style={{ 
+    objectFit: 'cover', 
+    transition: 'transform 0.4s ease',
+    // Example: Blur the image if the item is claimed
+    filter: isClaimed ? 'blur(8px)' : 'none' 
+  }}
+  sizes="(max-width: 768px) 100vw, 320px"
+/>
         ) : (
           <div style={{
             height: '100%',

@@ -145,7 +145,7 @@ function MyItemsTab({ items, loading, onDelete }: {
             <div style={{ position: 'relative', height: 140, background: 'var(--color-surface-3)' }}>
               {item.imageUrl ? (
                 <Image src={item.imageUrl} alt={item.title} fill
-                  style={{ objectFit: 'cover' }} sizes="320px" />
+                  style={{ objectFit: 'cover', filter: (item.status === 'claimed' || item.status === 'resolved') ? 'none' : 'blur(8px)' }} sizes="320px" />
               ) : (
                 <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>
                   {CATEGORY_EMOJIS[item.category]}
@@ -271,7 +271,7 @@ function MyClaimsTab({ claims, loading, onUpdate }: {
                 fontSize: '1.5rem', overflow: 'hidden', position: 'relative',
               }}>
                 {item?.imageUrl ? (
-                  <Image src={item.imageUrl} alt={item?.title ?? ''} fill style={{ objectFit: 'cover' }} sizes="56px" />
+                  <Image src={item.imageUrl} alt={item?.title ?? ''} fill style={{ objectFit: 'cover', filter: (item?.status === 'claimed' || item?.status === 'resolved') ? 'none' : 'blur(4px)' }} sizes="56px" />
                 ) : (
                   CATEGORY_EMOJIS[item?.category] ?? '📦'
                 )}

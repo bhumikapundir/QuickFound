@@ -1,7 +1,9 @@
 import type { NextConfig } from 'next'
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   images: {
+    // This tells Next.js NOT to optimize images and just use the URL as-is
+    unoptimized: true, 
     remotePatterns: [
       {
         protocol: 'https',
@@ -10,5 +12,4 @@ const nextConfig: NextConfig = {
     ],
   },
 }
-
-export default nextConfig
+export default nextConfig;
