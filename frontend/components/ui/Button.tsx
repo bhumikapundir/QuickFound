@@ -4,7 +4,7 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'  //types of btn main
 type Size    = 'sm' | 'md' | 'lg'  //sizes-> small,medium and large
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant //Button type
+  variant?: Variant //Button type danger etc
   size?: Size
   loading?: boolean
   children: ReactNode //content inside the button

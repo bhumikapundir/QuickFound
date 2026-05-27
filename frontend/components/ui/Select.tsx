@@ -8,7 +8,7 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string
   options: { value: string; label: string }[]   //dropdown options
   placeholder?: string
-}
+}                                                                                                                       
 
 export function Select({ label, error, options, placeholder, id, ...props }: SelectProps) {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-') //generate id
