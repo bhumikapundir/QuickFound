@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Item } from '@/types'
 import { formatDate, truncate, CATEGORY_LABELS } from '@/utils/helpers'
-import { cloudinaryBlur } from '@/utils/helpers'
+
 
 /* ============================================================
    ICONS

@@ -12,10 +12,6 @@ export const timeAgo = (dateStr: string): string => {
   if (hrs < 24) return `${hrs}h ago`
   return `${Math.floor(hrs / 24)}d ago`
 }
-export const cloudinaryBlur = (url: string, strength = 1200): string => {
-  if (!url || !url.includes("res.cloudinary.com")) return url;
-  return url.replace(/\/upload\/(v\d+\/)?/, `/upload/$1e_blur:2000/`);
-};
 export const truncate = (str: string, n = 80): string =>
   str.length > n ? str.slice(0, n) + '…' : str
 
